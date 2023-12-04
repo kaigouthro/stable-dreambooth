@@ -48,7 +48,7 @@ class TrainingConfig:
     def __post_init__(self):
         self.instance_prompt = self.instance_prompt.replace("[V]", self.identifier)
         self.evaluate_prompt = [s.replace("[V]", self.identifier) for s in self.evaluate_prompt]
-        
+
 
 def pred(model, noisy_latent, time_steps, prompt, guidance_scale):
     batch_size = noisy_latent.shape[0]
@@ -86,13 +86,13 @@ def pred(model, noisy_latent, time_steps, prompt, guidance_scale):
         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
     return noise_pred
-   
+
 
 def train_loop(config: TrainingConfig, model: StableDiffusionPipeline, noise_scheduler, optimizer, train_dataloader):
     # Initialize accelerator and tensorboard logging
     accelerator = Accelerator(
         mixed_precision=config.mixed_precision,
-        gradient_accumulation_steps=config.gradient_accumulation_steps, 
+        gradient_accumulation_steps=config.gradient_accumulation_steps,
 
     )
     if accelerator.is_main_process:
@@ -104,7 +104,7 @@ def train_loop(config: TrainingConfig, model: StableDiffusionPipeline, noise_sch
     model, optimizer, train_dataloader = accelerator.prepare(
         model, optimizer, train_dataloader 
     )
-    
+
     global_step = 0
 
     # Now you train the model
@@ -139,7 +139,7 @@ def train_loop(config: TrainingConfig, model: StableDiffusionPipeline, noise_sch
                 accelerator.clip_grad_norm_(model.unet.parameters(), 1.0)
                 optimizer.step()
                 optimizer.zero_grad()
-            
+
             progress_bar.update(1)
             logs = {"loss": loss.detach().item(), "step": global_step}
             progress_bar.set_postfix(**logs)
@@ -152,7 +152,8 @@ def train_loop(config: TrainingConfig, model: StableDiffusionPipeline, noise_sch
                 evaluate(config, epoch, model)
 
             if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_epochs - 1:
-                model.save_pretrained(config.output_dir) 
+                model.save_pretrained(config.output_dir)
+
 
 def make_grid(images, rows, cols):
     w, h = images[0].size
@@ -160,6 +161,7 @@ def make_grid(images, rows, cols):
     for i, image in enumerate(images):
         grid.paste(image, box=(i%cols*w, i//cols*h))
     return grid
+
 
 def evaluate(config: TrainingConfig, epoch, pipeline: StableDiffusionPipeline):
     # Sample some images from random noise (this is the backward diffusion process).
@@ -176,10 +178,12 @@ def evaluate(config: TrainingConfig, epoch, pipeline: StableDiffusionPipeline):
     os.makedirs(test_dir, exist_ok=True)
     image_grid.save(f"{test_dir}/{epoch:04d}.jpg")
 
+
 def get_dataloader(config: TrainingConfig):
     dataset = TrainDataset(config.data_path, config.instance_prompt, config.class_prompt, config.image_size)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True, pin_memory=True)
     return dataloader
+
 
 if __name__ == "__main__":
     config = TrainingConfig()
@@ -188,7 +192,7 @@ if __name__ == "__main__":
 
     with open(output_dir / "config.json", "w") as f:
         json.dump(dataclasses.asdict(config) , f)
-    
+
     model_id = "CompVis/stable-diffusion-v1-4"
     device = "cuda"
 
