@@ -8,15 +8,14 @@ if __name__ == "__main__":
     model = StableDiffusionPipeline.from_pretrained(model_id, use_auth_token=True, cache_dir="./.cache").to(device)
     tokenizer = model.tokenizer
 
-    rare_tokens = []
-    for k, v in tokenizer.encoder.items():
-        if len(k) <= 3 and 40000 > v > 35000:
-            rare_tokens.append(k)
-    
-    
+    rare_tokens = [
+        k
+        for k, v in tokenizer.encoder.items()
+        if len(k) <= 3 and 40000 > v > 35000
+    ]
     identifiers = []
     for _ in range(3):
         idx = random.randint(0, len(rare_tokens))
         identifiers.append(rare_tokens[idx])
-    
+
     print(" ".join(identifiers))
