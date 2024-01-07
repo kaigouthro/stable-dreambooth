@@ -178,8 +178,13 @@ def evaluate(config: TrainingConfig, epoch, pipeline: StableDiffusionPipeline):
 
 def get_dataloader(config: TrainingConfig):
     dataset = TrainDataset(config.data_path, config.instance_prompt, config.class_prompt, config.image_size)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True, pin_memory=True)
-    return dataloader
+    return torch.utils.data.DataLoader(
+        dataset,
+        batch_size=config.train_batch_size,
+        shuffle=True,
+        drop_last=True,
+        pin_memory=True,
+    )
 
 if __name__ == "__main__":
     config = TrainingConfig()
